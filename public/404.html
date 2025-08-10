@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Market</title>
+    <script>
+        // GitHub Pages SPA redirect
+        (function(l) {
+            if (l.search[1] === '/' ) {
+                var decoded = l.search.slice(1).split('&').map(function(s) { 
+                    return s.replace(/~and~/g, '&')
+                }).join('?');
+                window.history.replaceState(null, null,
+                    l.pathname.slice(0, -1) + decoded + l.hash
+                );
+            }
+        }(window.location))
+        
+        // For direct navigation to subpages with custom domain
+        const segments = window.location.pathname.split('/');
+        if (segments.length > 1 && segments[1] !== '') {
+            const newPath = '/?p=' + segments.slice(1).join('/');
+            window.location.replace(window.location.origin + newPath);
+        }
+    </script>
+</head>
+<body>
+    <p>Redirecting...</p>
+</body>
+</html>
