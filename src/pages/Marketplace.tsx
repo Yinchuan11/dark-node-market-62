@@ -44,6 +44,7 @@ const Marketplace = () => {
   const [ltcPrices, setLtcPrices] = useState<{[key: string]: number}>({});
   const [currentBtcPrice, setCurrentBtcPrice] = useState<number | null>(null);
   const [currentLtcPrice, setCurrentLtcPrice] = useState<number | null>(null);
+  const [userCount, setUserCount] = useState(0);
   
   const { cartItems, addToCart, updateQuantity, removeItem, clearCart, getCartItemCount } = useCart();
 
@@ -52,6 +53,22 @@ const Marketplace = () => {
     fetchCategories();
     fetchBtcPrice();
     fetchLtcPrice();
+    fetchUserCount();
+    
+    // Set up real-time listener for user count
+    const channel = supabase
+      .channel('user-count-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'profiles' }, 
+        () => {
+          fetchUserCount();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, profile]);
 
   useEffect(() => {
@@ -93,6 +110,19 @@ const Marketplace = () => {
     }
 
     setCategories(data || []);
+  };
+
+  const fetchUserCount = async () => {
+    const { count, error } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true });
+    
+    if (error) {
+      console.error('Error fetching user count:', error);
+      return;
+    }
+
+    setUserCount(count || 0);
   };
 
 
@@ -289,6 +319,23 @@ const Marketplace = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-3 md:px-6 py-4 md:py-6">
+
+        {/* User Statistics */}
+        <div className="mb-6">
+          <Card className="bg-gradient-to-r from-primary/10 to-secondary/10">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  <span className="text-sm text-muted-foreground">Registrierte Nutzer</span>
+                </div>
+                <div className="text-2xl font-bold text-primary">
+                  {userCount}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Search and Filter */}
         <div className="mb-6 md:mb-8 space-y-4">
