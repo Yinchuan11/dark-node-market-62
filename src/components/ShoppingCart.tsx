@@ -114,10 +114,18 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
       return;
     }
 
-    if (walletBalance.balance_eur < totalEUR) {
+    // Calculate crypto amounts needed
+    const btcNeeded = btcPrice ? totalEUR / btcPrice : 0;
+    const ltcNeeded = ltcPrice ? totalEUR / ltcPrice : 0;
+    
+    // Check if user has enough in either currency
+    const hasBtc = walletBalance.balance_btc >= btcNeeded;
+    const hasLtc = walletBalance.balance_ltc >= ltcNeeded;
+
+    if (!hasBtc && !hasLtc) {
       toast({
         title: "Insufficient Balance",
-        description: "You don't have enough balance on your account.",
+        description: `You need either ${btcNeeded.toFixed(8)} BTC or ${ltcNeeded.toFixed(8)} LTC to complete this purchase.`,
         variant: "destructive",
       });
       return;

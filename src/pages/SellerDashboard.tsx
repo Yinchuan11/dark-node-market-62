@@ -142,7 +142,7 @@ const SellerDashboard = () => {
           )
         )
       `)
-      .eq('order_items.products.seller_id', user.id)
+      .eq('status', 'confirmed')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -152,7 +152,7 @@ const SellerDashboard = () => {
 
     // Filter orders to only include those with items from this seller
     const filteredOrders = data?.filter(order => 
-      order.order_items.some(item => 
+      order.order_items && order.order_items.some(item => 
         item.products && item.products.seller_id === user.id
       )
     ) || [];
