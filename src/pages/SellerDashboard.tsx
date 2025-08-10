@@ -29,6 +29,7 @@ interface Product {
 
 interface Order {
   id: string;
+  user_id: string;
   total_amount_eur: number;
   status: string;
   created_at: string;
@@ -39,12 +40,16 @@ interface Order {
   shipping_postal_code: string;
   shipping_city: string;
   shipping_country: string;
+  profiles: {
+    username: string;
+  };
   order_items: {
     id: string;
     quantity: number;
     price_eur: number;
     products: {
       title: string;
+      seller_id: string;
     };
   }[];
 }
@@ -115,6 +120,7 @@ const SellerDashboard = () => {
       .from('orders')
       .select(`
         id,
+        user_id,
         total_amount_eur,
         status,
         created_at,
@@ -125,12 +131,14 @@ const SellerDashboard = () => {
         shipping_postal_code,
         shipping_city,
         shipping_country,
+        profiles!orders_user_id_fkey (username),
         order_items (
           id,
           quantity,
           price_eur,
           products (
-            title
+            title,
+            seller_id
           )
         )
       `)
@@ -458,12 +466,13 @@ const SellerDashboard = () => {
                           </p>
                           <p className="text-lg font-bold text-primary">€{order.total_amount_eur.toFixed(2)}</p>
                           <p className="text-sm">Status: <span className="font-medium">{order.status}</span></p>
+                          <p className="text-sm">Customer: <span className="font-medium">@{order.profiles.username}</span></p>
                           
                           <div className="mt-2">
                             <h4 className="font-medium text-sm">Items:</h4>
                             {order.order_items.map((item) => (
                               <p key={item.id} className="text-xs text-muted-foreground">
-                                {item.quantity}x {item.products.title} (€{item.price_eur})
+                                {item.quantity}x {item.products.title} (€{item.price_eur.toFixed(2)})
                               </p>
                             ))}
                           </div>

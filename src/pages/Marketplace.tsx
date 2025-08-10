@@ -44,50 +44,14 @@ const Marketplace = () => {
   const [ltcPrices, setLtcPrices] = useState<{[key: string]: number}>({});
   const [currentBtcPrice, setCurrentBtcPrice] = useState<number | null>(null);
   const [currentLtcPrice, setCurrentLtcPrice] = useState<number | null>(null);
-  const [userCount, setUserCount] = useState(0);
-  const [onlineUsers, setOnlineUsers] = useState(0);
   
   const { cartItems, addToCart, updateQuantity, removeItem, clearCart, getCartItemCount } = useCart();
-
-  // Fake online users logic: start below max and adjust every interval
-  const generateInitialOnlineUsers = () => Math.floor(Math.random() * (85 - 60 + 1)) + 60;
-  const adjustOnlineUsers = (prev: number) => {
-    const change = Math.floor(Math.random() * (9 - 4 + 1)) + 4;
-    const direction = Math.random() < 0.5 ? -1 : 1;
-    const next = Math.min(93, Math.max(1, prev + change * direction));
-    return next;
-  };
 
   useEffect(() => {
     fetchProducts();
     fetchCategories();
     fetchBtcPrice();
     fetchLtcPrice();
-    fetchUserCount();
-    
-    // Initialize fake online users
-    setOnlineUsers(generateInitialOnlineUsers());
-    
-    // Set up real-time listener for user count
-    const userCountChannel = supabase
-      .channel('user-count-changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'profiles' }, 
-        () => {
-          fetchUserCount();
-        }
-      )
-      .subscribe();
-
-    // Update fake online users every 3 minutes (180 seconds)
-    const onlineUsersInterval = setInterval(() => {
-      setOnlineUsers(prev => adjustOnlineUsers(prev));
-    }, 180000);
-      
-    return () => {
-      supabase.removeChannel(userCountChannel);
-      clearInterval(onlineUsersInterval);
-    };
   }, [user, profile]);
 
   useEffect(() => {
@@ -131,20 +95,6 @@ const Marketplace = () => {
     setCategories(data || []);
   };
 
-  const fetchUserCount = async () => {
-    const { count, error } = await supabase
-      .from('profiles')
-      .select('*', { count: 'exact', head: true });
-    
-    if (error) {
-      console.error('Error fetching user count:', error);
-      return;
-    }
-
-    setUserCount(count || 0);
-  };
-
-  // Removed fetchOnlineUsers function - now using fake data
 
   const fetchBtcPrice = async () => {
     try {
@@ -339,27 +289,6 @@ const Marketplace = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-3 md:px-6 py-4 md:py-6">
-        {/* User Statistics */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Users className="h-6 w-6 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Registered Users</p>
-                  <p className="text-2xl font-bold text-primary">{userCount}</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Online Now</p>
-                  <p className="text-2xl font-bold text-green-600">{onlineUsers}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Search and Filter */}
         <div className="mb-6 md:mb-8 space-y-4">

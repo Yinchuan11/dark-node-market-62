@@ -169,8 +169,18 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, open, onOpenChange
               <Button 
                 className="flex-1"
                 onClick={() => {
+                  // Check if user is logged in
+                  if (!user) {
+                    toast({
+                      title: "Login Required",
+                      description: "Please log in to add items to cart.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+
                   // Check if user is trying to buy their own product
-                  if (user && product.seller_id === user.id) {
+                  if (product.seller_id === user.id) {
                     toast({
                       title: "Cannot Add to Cart",
                       description: "You cannot purchase your own product.",

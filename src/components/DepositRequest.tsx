@@ -30,6 +30,7 @@ export function DepositRequest() {
   } | null>(null);
   const [btcPrice, setBtcPrice] = useState<number | null>(null);
   const [ltcPrice, setLtcPrice] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string>("");
 
   // Check for existing pending request and user addresses
   useEffect(() => {
@@ -38,6 +39,33 @@ export function DepositRequest() {
       getUserAddresses();
     }
   }, [user]);
+
+  // Countdown timer for active deposit request
+  useEffect(() => {
+    if (!existingRequest) return;
+    
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const expires = new Date(existingRequest.expires_at).getTime();
+      const difference = expires - now;
+      
+      if (difference > 0) {
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+        
+        setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+      } else {
+        setTimeLeft("Expired");
+        setExistingRequest(null);
+      }
+    };
+    
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+    
+    return () => clearInterval(timer);
+  }, [existingRequest]);
 
   const checkExistingRequest = async () => {
     if (!user) return;
@@ -48,20 +76,25 @@ export function DepositRequest() {
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'pending')
-        .gt('expires_at', new Date().toISOString())
         .maybeSingle();
 
       if (error) throw error;
       
       if (data) {
-        const currency = data.currency === 'BTC' ? 'bitcoin' : 'litecoin';
-        const qrData = `${currency}:${data.address}?amount=${data.crypto_amount.toFixed(8)}`;
+        // Check if request is still valid (not expired)
+        const now = new Date().getTime();
+        const expires = new Date(data.expires_at).getTime();
         
-        setExistingRequest({
-          ...data,
-          qr_data: qrData
-        });
-        setSelectedCrypto(currency);
+        if (expires > now) {
+          const currency = data.currency === 'BTC' ? 'bitcoin' : 'litecoin';
+          const qrData = `${currency}:${data.address}?amount=${data.crypto_amount.toFixed(8)}`;
+          
+          setExistingRequest({
+            ...data,
+            qr_data: qrData
+          });
+          setSelectedCrypto(currency);
+        }
       }
     } catch (error) {
       console.error('Error checking existing request:', error);
@@ -107,23 +140,31 @@ export function DepositRequest() {
       const { data, error } = await supabase.functions.invoke('generate-user-addresses');
       if (error) throw error;
       
-      if (data.success) {
+      if (data && data.success) {
         // Refresh addresses
-        await getUserAddresses();
+        setTimeout(() => getUserAddresses(), 1000);
         toast({
           title: "Addresses Generated",
           description: "Your Bitcoin and Litecoin addresses have been created.",
         });
+      } else {
+        throw new Error("Failed to generate addresses");
       }
     } catch (error) {
       console.error('Error generating addresses:', error);
       toast({
-        title: "Error",
-        description: "Could not generate crypto addresses. Please try again.",
+        title: "Error", 
+        description: "Could not generate crypto addresses. Please refresh the page.",
         variant: "destructive",
       });
+      
+      // Retry after delay
+      setTimeout(() => {
+        setGeneratingAddresses(false);
+        getUserAddresses();
+      }, 2000);
     } finally {
-      setGeneratingAddresses(false);
+      setTimeout(() => setGeneratingAddresses(false), 1000);
     }
   };
 
@@ -381,6 +422,10 @@ export function DepositRequest() {
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Expires at:</span>
               <span>{new Date(existingRequest.expires_at).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-sm font-medium">
+              <span>Time remaining:</span>
+              <span className={timeLeft === "Expired" ? "text-red-500" : "text-primary"}>{timeLeft}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Fingerprint:</span>
