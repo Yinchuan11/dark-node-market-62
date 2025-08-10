@@ -50,7 +50,7 @@ interface Order {
     products: {
       title: string;
       seller_id: string;
-    };
+    } | null;
   }[];
 }
 
@@ -150,7 +150,14 @@ const SellerDashboard = () => {
       return;
     }
 
-    setOrders(data || []);
+    // Filter orders to only include those with items from this seller
+    const filteredOrders = data?.filter(order => 
+      order.order_items.some(item => 
+        item.products && item.products.seller_id === user.id
+      )
+    ) || [];
+
+    setOrders(filteredOrders);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -470,11 +477,13 @@ const SellerDashboard = () => {
                           
                           <div className="mt-2">
                             <h4 className="font-medium text-sm">Items:</h4>
-                            {order.order_items.map((item) => (
-                              <p key={item.id} className="text-xs text-muted-foreground">
-                                {item.quantity}x {item.products.title} (€{item.price_eur.toFixed(2)})
-                              </p>
-                            ))}
+                            {order.order_items
+                              .filter(item => item.products && item.products.seller_id === user.id)
+                              .map((item) => (
+                                <p key={item.id} className="text-xs text-muted-foreground">
+                                  {item.quantity}x {item.products?.title || 'Product unavailable'} (€{item.price_eur.toFixed(2)})
+                                </p>
+                              ))}
                           </div>
                         </div>
                         
