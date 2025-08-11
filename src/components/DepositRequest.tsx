@@ -601,10 +601,28 @@ export function DepositRequest() {
           {userAddresses && (
             <div className="bg-muted p-4 rounded-lg space-y-2">
               <h4 className="font-medium text-sm">Your Addresses:</h4>
-              <div className="text-xs space-y-1">
-                <div><strong>BTC:</strong> {userAddresses.btc}</div>
-                <div><strong>LTC:</strong> {userAddresses.ltc}</div>
-                <div><strong>XMR:</strong> {userAddresses.xmr}</div>
+              <div className="text-xs space-y-2">
+                <div className="space-y-1">
+                  <div className="font-medium">BTC:</div>
+                  <div className="font-mono text-xs break-all bg-background p-2 rounded border">
+                    {userAddresses.btc}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="font-medium">LTC:</div>
+                  <div className="font-mono text-xs break-all bg-background p-2 rounded border">
+                    {userAddresses.ltc}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="font-medium flex items-center gap-2">
+                    XMR:
+                    <span className="text-red-500 text-xs">(Demo - Not Real!)</span>
+                  </div>
+                  <div className="font-mono text-xs break-all bg-background p-2 rounded border">
+                    {userAddresses.xmr}
+                  </div>
+                </div>
               </div>
             </div>
           )}
