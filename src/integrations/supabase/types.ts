@@ -230,6 +230,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          order_status: Database["public"]["Enums"]["order_status"] | null
           shipping_city: string | null
           shipping_country: string | null
           shipping_first_name: string | null
@@ -238,13 +239,18 @@ export type Database = {
           shipping_postal_code: string | null
           shipping_street: string | null
           status: string
+          status_updated_at: string | null
+          status_updated_by: string | null
           total_amount_eur: number
+          tracking_number: string | null
+          tracking_url: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          order_status?: Database["public"]["Enums"]["order_status"] | null
           shipping_city?: string | null
           shipping_country?: string | null
           shipping_first_name?: string | null
@@ -253,13 +259,18 @@ export type Database = {
           shipping_postal_code?: string | null
           shipping_street?: string | null
           status?: string
+          status_updated_at?: string | null
+          status_updated_by?: string | null
           total_amount_eur: number
+          tracking_number?: string | null
+          tracking_url?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          order_status?: Database["public"]["Enums"]["order_status"] | null
           shipping_city?: string | null
           shipping_country?: string | null
           shipping_first_name?: string | null
@@ -268,7 +279,11 @@ export type Database = {
           shipping_postal_code?: string | null
           shipping_street?: string | null
           status?: string
+          status_updated_at?: string | null
+          status_updated_by?: string | null
           total_amount_eur?: number
+          tracking_number?: string | null
+          tracking_url?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -359,6 +374,74 @@ export type Database = {
           updated_at?: string
           user_id?: string
           username?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          order_id: string
+          rating: number
+          reviewer_id: string
+          seller_id: string
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          rating: number
+          reviewer_id: string
+          seller_id: string
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          rating?: number
+          reviewer_id?: string
+          seller_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_ratings: {
+        Row: {
+          average_rating: number
+          id: string
+          seller_id: string
+          total_rating_points: number
+          total_reviews: number
+          updated_at: string
+        }
+        Insert: {
+          average_rating?: number
+          id?: string
+          seller_id: string
+          total_rating_points?: number
+          total_reviews?: number
+          updated_at?: string
+        }
+        Update: {
+          average_rating?: number
+          id?: string
+          seller_id?: string
+          total_rating_points?: number
+          total_reviews?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -583,8 +666,24 @@ export type Database = {
         Args: { user_email: string }
         Returns: undefined
       }
+      update_order_status: {
+        Args: {
+          order_uuid: string
+          new_status: Database["public"]["Enums"]["order_status"]
+          tracking_num?: string
+          tracking_link?: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      order_status:
+        | "pending"
+        | "confirmed"
+        | "processing"
+        | "shipped"
+        | "delivered"
+        | "cancelled"
       product_category:
         | "electronics"
         | "clothing"
@@ -720,6 +819,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      order_status: [
+        "pending",
+        "confirmed",
+        "processing",
+        "shipped",
+        "delivered",
+        "cancelled",
+      ],
       product_category: [
         "electronics",
         "clothing",

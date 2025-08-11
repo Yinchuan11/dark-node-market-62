@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, Edit, Package, User } from 'lucide-react';
+import { Upload, Edit, Package, User, Truck, CheckCircle } from 'lucide-react';
 import { FileUpload } from '@/components/ui/file-upload';
 import EditProductModal from '@/components/EditProductModal';
+import OrderStatusModal from '@/components/OrderStatusModal';
 
 
 interface Product {
@@ -31,7 +32,7 @@ interface Order {
   id: string;
   user_id: string;
   total_amount_eur: number;
-  status: string;
+  order_status: string;
   created_at: string;
   shipping_first_name: string | null;
   shipping_last_name: string | null;
@@ -40,6 +41,8 @@ interface Order {
   shipping_postal_code: string | null;
   shipping_city: string | null;
   shipping_country: string | null;
+  tracking_number: string | null;
+  tracking_url: string | null;
   buyer_username: string;
   items: {
     order_item_id: string;
@@ -68,6 +71,9 @@ const SellerDashboard = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string>('');
+  const [selectedOrderStatus, setSelectedOrderStatus] = useState<string>('');
 
   useEffect(() => {
     fetchCategories();
@@ -219,6 +225,42 @@ const fetchOrders = async () => {
         title: "Product deleted",
         description: "The product has been successfully deleted."
       });
+    }
+  };
+
+  const handleUpdateOrderStatus = (orderId: string, currentStatus: string) => {
+    setSelectedOrderId(orderId);
+    setSelectedOrderStatus(currentStatus);
+    setStatusModalOpen(true);
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'processing':
+        return <Package className="h-4 w-4 text-blue-500" />;
+      case 'shipped':
+        return <Truck className="h-4 w-4 text-orange-500" />;
+      case 'delivered':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      default:
+        return <CheckCircle className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'bg-blue-100 text-blue-800';
+      case 'processing':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'shipped':
+        return 'bg-orange-100 text-orange-800';
+      case 'delivered':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -448,13 +490,37 @@ const fetchOrders = async () => {
                     <div key={order.id} className="border rounded-lg p-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <h3 className="font-semibold">Order #{order.id.slice(0, 8)}</h3>
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="font-semibold">Order #{order.id.slice(0, 8)}</h3>
+                            <div className="flex items-center gap-2">
+                              {getStatusIcon(order.order_status)}
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.order_status)}`}>
+                                {order.order_status}
+                              </span>
+                            </div>
+                          </div>
                           <p className="text-sm text-muted-foreground">
                             {new Date(order.created_at).toLocaleDateString()}
                           </p>
                           <p className="text-lg font-bold text-primary">€{order.total_amount_eur.toFixed(2)}</p>
-                          <p className="text-sm">Status: <span className="font-medium">{order.status}</span></p>
                           <p className="text-sm">Customer: <span className="font-medium">@{order.buyer_username}</span></p>
+                          
+                          {/* Tracking Information */}
+                          {order.tracking_number && (
+                            <div className="mt-2 p-2 bg-muted rounded">
+                              <p className="text-sm font-medium">Tracking: {order.tracking_number}</p>
+                              {order.tracking_url && (
+                                <a 
+                                  href={order.tracking_url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-primary hover:underline"
+                                >
+                                  Track Package
+                                </a>
+                              )}
+                            </div>
+                          )}
                           
                           <div className="mt-2">
                             <h4 className="font-medium text-sm">Items:</h4>
@@ -464,6 +530,16 @@ const fetchOrders = async () => {
                               </p>
                             ))}
                           </div>
+
+                          {/* Update Status Button */}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-3"
+                            onClick={() => handleUpdateOrderStatus(order.id, order.order_status)}
+                          >
+                            Update Status
+                          </Button>
                         </div>
                         
                         <div>
@@ -495,6 +571,15 @@ const fetchOrders = async () => {
           open={editModalOpen}
           onOpenChange={setEditModalOpen}
           onProductUpdated={fetchProducts}
+        />
+
+        {/* Order Status Modal */}
+        <OrderStatusModal
+          open={statusModalOpen}
+          onOpenChange={setStatusModalOpen}
+          orderId={selectedOrderId}
+          currentStatus={selectedOrderStatus}
+          onStatusUpdated={fetchOrders}
         />
       </div>
     </div>

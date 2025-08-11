@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Search, LogOut, Bitcoin, Wallet, Settings, Users } from 'lucide-react';
 import ProductModal from '@/components/ProductModal';
 import ShoppingCart from '@/components/ShoppingCart';
+import SellerProfileModal from '@/components/SellerProfileModal';
 import { useCart } from '@/hooks/useCart';
 import NewsPanel from '@/components/NewsPanel';
 
@@ -46,6 +47,9 @@ const Marketplace = () => {
   const [currentBtcPrice, setCurrentBtcPrice] = useState<number | null>(null);
   const [currentLtcPrice, setCurrentLtcPrice] = useState<number | null>(null);
   const [userCount, setUserCount] = useState(0);
+  const [sellerProfileOpen, setSellerProfileOpen] = useState(false);
+  const [selectedSellerId, setSelectedSellerId] = useState('');
+  const [selectedSellerUsername, setSelectedSellerUsername] = useState('');
   
   const { cartItems, addToCart, updateQuantity, removeItem, clearCart, getCartItemCount } = useCart();
 
@@ -219,6 +223,24 @@ const Marketplace = () => {
       title: "Added to Cart",
       description: `${product.title} has been added to your cart.`
     });
+  };
+
+  const handleViewSellerProfile = async (sellerId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('user_id', sellerId)
+        .single();
+      
+      if (error) throw error;
+      
+      setSelectedSellerId(sellerId);
+      setSelectedSellerUsername(data?.username || 'Unknown');
+      setSellerProfileOpen(true);
+    } catch (error) {
+      console.error('Error fetching seller info:', error);
+    }
   };
 
   const handleSignOut = async () => {
@@ -414,6 +436,17 @@ const Marketplace = () => {
                   >
                     {product.stock === 0 ? 'Out of Stock' : 'Buy Now'}
                   </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewSellerProfile(product.seller_id);
+                    }}
+                    className="w-full mt-2 text-xs md:text-sm"
+                    size="sm"
+                  >
+                    View Seller
+                  </Button>
                 </CardContent>
               </div>
             </Card>
@@ -447,6 +480,14 @@ const Marketplace = () => {
         onUpdateQuantity={updateQuantity}
         onRemoveItem={removeItem}
         onClearCart={clearCart}
+      />
+
+      {/* Seller Profile Modal */}
+      <SellerProfileModal
+        open={sellerProfileOpen}
+        onOpenChange={setSellerProfileOpen}
+        sellerId={selectedSellerId}
+        sellerUsername={selectedSellerUsername}
       />
     </div>
   );
