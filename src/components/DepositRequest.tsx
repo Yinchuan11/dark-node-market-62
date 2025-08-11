@@ -121,8 +121,17 @@ export function DepositRequest() {
         
         if (btcAddr && ltcAddr && xmrAddr && btcAddr !== 'pending' && ltcAddr !== 'pending' && xmrAddr !== 'pending') {
           setUserAddresses({ btc: btcAddr, ltc: ltcAddr, xmr: xmrAddr });
+          setGeneratingAddresses(false); // Make sure to stop any loading state
         } else {
           // Generate addresses if they are still pending
+          await generateUserAddresses();
+        }
+      } else if (data && data.length > 0) {
+        // Some addresses exist but not all three - check what's missing and generate
+        const existingCurrencies = data.map(addr => addr.currency);
+        const missingCurrencies = ['BTC', 'LTC', 'XMR'].filter(currency => !existingCurrencies.includes(currency));
+        
+        if (missingCurrencies.length > 0) {
           await generateUserAddresses();
         }
       } else {
@@ -131,6 +140,12 @@ export function DepositRequest() {
       }
     } catch (error) {
       console.error('Error getting user addresses:', error);
+      setGeneratingAddresses(false); // Stop loading on error
+      toast({
+        title: "Error",
+        description: "Could not load your addresses. Please refresh the page.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -143,8 +158,8 @@ export function DepositRequest() {
       if (error) throw error;
       
       if (data && data.success) {
-        // Refresh addresses
-        setTimeout(() => getUserAddresses(), 1000);
+        // Refresh addresses after a short delay
+        setTimeout(() => getUserAddresses(), 2000);
         toast({
           title: "Addresses Generated",
           description: "Your Bitcoin, Litecoin and Monero addresses have been created.",
@@ -154,6 +169,14 @@ export function DepositRequest() {
       }
     } catch (error) {
       console.error('Error generating addresses:', error);
+      setGeneratingAddresses(false);
+      
+      // If addresses already exist, just fetch them
+      if (error.message && error.message.includes('already has addresses')) {
+        await getUserAddresses();
+        return;
+      }
+      
       toast({
         title: "Error", 
         description: "Could not generate crypto addresses. Please refresh the page.",
@@ -162,11 +185,8 @@ export function DepositRequest() {
       
       // Retry after delay
       setTimeout(() => {
-        setGeneratingAddresses(false);
         getUserAddresses();
-      }, 2000);
-    } finally {
-      setTimeout(() => setGeneratingAddresses(false), 1000);
+      }, 3000);
     }
   };
 
