@@ -51,9 +51,7 @@ const Marketplace = () => {
 
   useEffect(() => {
     fetchProducts();
-    fetchCategories();
-    fetchBtcPrice();
-    fetchLtcPrice();
+    fetchCategories(); 
     fetchUserCount();
     
     // Set up real-time listener for user count

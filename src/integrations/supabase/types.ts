@@ -371,8 +371,12 @@ export type Database = {
           confirmed_at: string | null
           created_at: string
           description: string | null
+          from_username: string | null
           id: string
+          related_order_id: string | null
           status: string
+          to_username: string | null
+          transaction_direction: string | null
           type: string
           user_id: string
         }
@@ -384,8 +388,12 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           description?: string | null
+          from_username?: string | null
           id?: string
+          related_order_id?: string | null
           status?: string
+          to_username?: string | null
+          transaction_direction?: string | null
           type: string
           user_id: string
         }
@@ -397,8 +405,12 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           description?: string | null
+          from_username?: string | null
           id?: string
+          related_order_id?: string | null
           status?: string
+          to_username?: string | null
+          transaction_direction?: string | null
           type?: string
           user_id?: string
         }
