@@ -83,7 +83,7 @@ serve(async (req) => {
       .insert({ 
         user_id: userId, 
         total_amount_eur: totalEUR, 
-        status: 'pending',
+        status: 'confirmed',
         shipping_first_name: shippingAddress.firstName,
         shipping_last_name: shippingAddress.lastName,
         shipping_street: shippingAddress.street,

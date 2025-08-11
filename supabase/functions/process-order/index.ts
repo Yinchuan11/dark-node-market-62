@@ -71,7 +71,7 @@ serve(async (req) => {
     // Create order
     const { data: order, error: orderErr } = await supabase
       .from('orders')
-      .insert({ user_id: userId, total_amount_eur: totalEUR, status: 'pending' })
+      .insert({ user_id: userId, total_amount_eur: totalEUR, status: 'confirmed' })
       .select()
       .maybeSingle();
     if (orderErr || !order) throw orderErr ?? new Error('Order creation failed');
