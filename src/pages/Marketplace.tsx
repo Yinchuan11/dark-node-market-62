@@ -273,18 +273,18 @@ const Marketplace = () => {
                 <Settings className="h-3 w-3 sm:mr-1" />
                 <span className="hidden sm:inline">Settings</span>
               </Button>
-              
+              <Button variant="ghost" size="sm" onClick={() => navigate('/orders')} className="text-xs px-1 sm:px-2">
+                <span>Orders</span>
+              </Button>
               <Button variant="ghost" size="sm" onClick={() => navigate('/wallet')} className="text-xs px-1 sm:px-2">
                 <Wallet className="h-3 w-3 sm:mr-1" />
                 <span className="hidden sm:inline">Wallet</span>
               </Button>
-              
               {profile?.role === 'admin' && (
                 <Button variant="ghost" size="sm" onClick={() => window.location.href = '/admin'} className="text-xs px-1 sm:px-2">
                   <span>Admin Panel</span>
                 </Button>
               )}
-              
               {(profile?.role === 'seller' || profile?.role === 'admin') && (
                 <Button variant="ghost" size="sm" onClick={() => window.location.href = '/seller'} className="text-xs px-1 sm:px-2">
                   <span>Seller Dashboard</span>

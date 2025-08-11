@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { CartProvider } from "./hooks/useCart";
 import PrivacyWarning from "./components/PrivacyWarning";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -14,6 +15,7 @@ import AdminPanel from "./pages/AdminPanel";
 import SellerDashboard from "./pages/SellerDashboard";
 import Wallet from "./pages/Wallet";
 import Settings from "./pages/Settings";
+import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,24 +27,27 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <PrivacyWarning />
-          <BrowserRouter basename={basename}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/marketplace" element={<Marketplace />} />
-              <Route path="/admin" element={<AdminPanel />} />
-              <Route path="/seller" element={<SellerDashboard />} />
-              <Route path="/wallet" element={<Wallet />} />
-              <Route path="/settings" element={<Settings />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <PrivacyWarning />
+            <BrowserRouter basename={basename}>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/seller" element={<SellerDashboard />} />
+                <Route path="/wallet" element={<Wallet />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/orders" element={<Orders />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </CartProvider>
       </ThemeProvider>
     </AuthProvider>
   </QueryClientProvider>

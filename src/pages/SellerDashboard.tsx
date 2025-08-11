@@ -249,6 +249,25 @@ const fetchOrders = async () => {
           </Button>
         </div>
 
+        {/* Seller Rules */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Seller Rules</CardTitle>
+            <CardDescription>Please follow these professional guidelines</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+              <li>Do not scam or mislead users. Honesty is mandatory.</li>
+              <li>Ship orders promptly and provide accurate tracking when available.</li>
+              <li>Describe products truthfully with real photos and specifications.</li>
+              <li>Maintain professional communication and respond within 24–48 hours.</li>
+              <li>Comply with all applicable laws and do not list prohibited items.</li>
+              <li>Respect user privacy; never share buyer information.</li>
+              <li>Cancel and refund orders you cannot fulfill in a timely manner.</li>
+            </ul>
+          </CardContent>
+        </Card>
+
         <Tabs defaultValue="products" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="products" className="flex items-center gap-2">

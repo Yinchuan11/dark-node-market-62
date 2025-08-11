@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -19,9 +19,22 @@ interface Product {
   category: string;
 }
 
+interface CartContextType {
+  cartItems: CartItem[];
+  addToCart: (product: Product) => void;
+  updateQuantity: (id: string, quantity: number) => void;
+  removeItem: (id: string) => void;
+  clearCart: () => void;
+  getCartTotal: () => number;
+  getCartItemCount: () => number;
+  isLoading: boolean;
+}
+
 const CART_STORAGE_KEY = 'shopping-cart-items';
 
-export const useCart = () => {
+const CartContext = createContext<CartContextType | undefined>(undefined);
+
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,10 +52,10 @@ export const useCart = () => {
 
         if (error) throw error;
 
-        const dbCartItems: CartItem[] = data.map(item => ({
+        const dbCartItems: CartItem[] = (data || []).map((item: any) => ({
           id: item.product_id,
           title: item.title,
-          price: item.price,
+          price: Number(item.price),
           quantity: item.quantity,
           image_url: item.image_url,
           category: item.category
@@ -51,7 +64,11 @@ export const useCart = () => {
         setCartItems(dbCartItems);
         
         // Sync to localStorage
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(dbCartItems));
+        try {
+          localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(dbCartItems));
+        } catch (e) {
+          console.error('Error syncing cart to localStorage:', e);
+        }
       } catch (error) {
         console.error('Error loading cart from database:', error);
         // Fallback to localStorage
@@ -71,6 +88,8 @@ export const useCart = () => {
       if (savedCart) {
         const parsedCart = JSON.parse(savedCart);
         setCartItems(parsedCart);
+      } else {
+        setCartItems([]);
       }
     } catch (error) {
       console.error('Error loading cart from localStorage:', error);
@@ -127,7 +146,7 @@ export const useCart = () => {
   // Clean up cart items for deleted/deactivated products
   useEffect(() => {
     const cleanupCart = async () => {
-      if (cartItems.length === 0 || !user) return;
+      if (cartItems.length === 0) return;
 
       try {
         const productIds = cartItems.map(item => item.id);
@@ -139,7 +158,7 @@ export const useCart = () => {
 
         if (error) throw error;
 
-        const activeProductIds = new Set(activeProducts?.map(p => p.id) || []);
+        const activeProductIds = new Set((activeProducts || []).map(p => p.id));
         const cleanedCartItems = cartItems.filter(item => activeProductIds.has(item.id));
 
         if (cleanedCartItems.length !== cartItems.length) {
@@ -151,13 +170,12 @@ export const useCart = () => {
     };
 
     cleanupCart();
-  }, [cartItems, user]);
+  }, [cartItems]);
 
   // Save cart whenever cartItems changes
   useEffect(() => {
-    if (cartItems.length > 0 || user) {
-      saveCart(cartItems);
-    }
+    // Persist even when logged out via localStorage; also sync to DB when logged in
+    saveCart(cartItems);
   }, [cartItems, saveCart]);
 
   const addToCart = useCallback((product: Product) => {
@@ -211,7 +229,7 @@ export const useCart = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   }, [cartItems]);
 
-  return {
+  const value: CartContextType = {
     cartItems,
     addToCart,
     updateQuantity,
@@ -219,6 +237,20 @@ export const useCart = () => {
     clearCart,
     getCartTotal,
     getCartItemCount,
-    isLoading
+    isLoading,
   };
+
+  return (
+    <CartContext.Provider value={value}>
+      {children}
+    </CartContext.Provider>
+  );
+};
+
+export const useCart = (): CartContextType => {
+  const ctx = useContext(CartContext);
+  if (!ctx) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return ctx;
 };
