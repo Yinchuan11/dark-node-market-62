@@ -35,7 +35,7 @@ jobs:
         
       - name: Add CNAME and fix asset paths
         run: |
-          echo "oracle.market.store" > dist/CNAME
+          echo "oracle-market.store" > dist/CNAME
           find dist -name "*.html" -exec sed -i 's|="/assets/|="./assets/|g' {} \;
         
       - name: Setup Pages
