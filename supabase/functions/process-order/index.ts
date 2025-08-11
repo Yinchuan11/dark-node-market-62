@@ -107,7 +107,9 @@ serve(async (req) => {
         amount_eur: -totalEUR,
         amount_btc: -totalBTC,
         status: 'confirmed',
-        description: `Order #${String(order.id).slice(0,8)} (btc)`,
+        description: `Order #${String(order.id).slice(0,8)} (BTC)`,
+        transaction_direction: 'outgoing',
+        related_order_id: order.id
       });
     } else {
       await supabase.from('wallet_balances')
@@ -119,12 +121,28 @@ serve(async (req) => {
         amount_eur: -totalEUR,
         amount_btc: -totalLTC, // store LTC amount here as convention
         status: 'confirmed',
-        description: `Order #${String(order.id).slice(0,8)} (ltc)`,
+        description: `Order #${String(order.id).slice(0,8)} (LTC)`,
+        transaction_direction: 'outgoing',
+        related_order_id: order.id
       });
     }
 
+    // Get buyer username for transaction tracking
+    const { data: buyerProfile } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('user_id', userId)
+      .maybeSingle();
+
     // Credit each seller and create seller transactions
     for (const [sellerId, sums] of Object.entries(sellerTotals)) {
+      // Get seller username
+      const { data: sellerProfile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('user_id', sellerId)
+        .maybeSingle();
+
       if (method === 'btc') {
         const { data: sBal } = await supabase
           .from('wallet_balances')
@@ -145,7 +163,10 @@ serve(async (req) => {
           amount_eur: sums.eur,
           amount_btc: sums.btc,
           status: 'confirmed',
-          description: `Sale #${String(order.id).slice(0,8)} (btc)`
+          description: `Sale #${String(order.id).slice(0,8)} (BTC)`,
+          transaction_direction: 'incoming',
+          from_username: buyerProfile?.username || 'Unknown',
+          related_order_id: order.id
         });
       } else {
         const { data: sBal } = await supabase
@@ -167,7 +188,10 @@ serve(async (req) => {
           amount_eur: sums.eur,
           amount_btc: sums.ltc, // store LTC amount here
           status: 'confirmed',
-          description: `Sale #${String(order.id).slice(0,8)} (ltc)`
+          description: `Sale #${String(order.id).slice(0,8)} (LTC)`,
+          transaction_direction: 'incoming',
+          from_username: buyerProfile?.username || 'Unknown',
+          related_order_id: order.id
         });
       }
     }
