@@ -65,7 +65,7 @@ serve(async (req) => {
       .select('*')
       .eq('user_id', user.id)
 
-    if (existingAddresses && existingAddresses.length >= 3) {
+    if (existingAddresses && existingAddresses.length >= 2) {
       console.log('User already has addresses')
       return new Response(
         JSON.stringify({ 
@@ -147,30 +147,9 @@ serve(async (req) => {
       throw ltcError
     }
 
-    // Generate Monero address using dedicated function
-    const xmrResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-monero-address`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    let xmrAddress = null;
-    if (xmrResponse.ok) {
-      const xmrData = await xmrResponse.json();
-      xmrAddress = xmrData.address;
-      console.log('Generated Monero address:', xmrAddress);
-    } else {
-      console.error('Failed to generate Monero address');
-      // Use fallback for now
-      xmrAddress = '48pKEZF3nMWVdSwKrqmQ8k2fmjjmYskcWfBW5z2dqVyMBHm8KZGL1TYG5xYCcb7Wf2Pm5gMdNqJp8FHrJ5CjjpZX2f5GgNTKj';
-    }
-
     addresses.push(
       { currency: 'BTC', address: btcData.address },
-      { currency: 'LTC', address: ltcData.address },
-      { currency: 'XMR', address: xmrAddress }
+      { currency: 'LTC', address: ltcData.address }
     )
 
     return new Response(

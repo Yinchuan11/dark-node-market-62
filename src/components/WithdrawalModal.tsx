@@ -21,7 +21,6 @@ interface WalletBalance {
   balance_eur: number;
   balance_btc: number;
   balance_ltc: number;
-  balance_xmr: number;
 }
 
 interface WithdrawalFees {
@@ -41,10 +40,10 @@ interface WithdrawalLimits {
 
 export default function WithdrawalModal({ open, onOpenChange, onWithdrawalSuccess }: WithdrawalModalProps) {
   const { user } = useAuth();
-  const { btcPrice, ltcPrice, xmrPrice } = useCryptoPrices();
+  const { btcPrice, ltcPrice } = useCryptoPrices();
   const { toast } = useToast();
 
-  const [selectedCrypto, setSelectedCrypto] = useState<'BTC' | 'LTC' | 'XMR'>('BTC');
+  const [selectedCrypto, setSelectedCrypto] = useState<'BTC' | 'LTC'>('BTC');
   const [amount, setAmount] = useState<string>('');
   const [destinationAddress, setDestinationAddress] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -152,7 +151,7 @@ export default function WithdrawalModal({ open, onOpenChange, onWithdrawalSucces
     const totalFee = fee.base_fee_eur + percentageFee;
     const netAmount = amountEur - totalFee;
 
-    const cryptoPrice = selectedCrypto === 'BTC' ? btcPrice : selectedCrypto === 'LTC' ? ltcPrice : xmrPrice;
+    const cryptoPrice = selectedCrypto === 'BTC' ? btcPrice : ltcPrice;
     const cryptoAmount = cryptoPrice ? netAmount / cryptoPrice : 0;
 
     return {
@@ -179,7 +178,7 @@ export default function WithdrawalModal({ open, onOpenChange, onWithdrawalSucces
       return { valid: false, error: 'Amount too small after fees' };
     }
 
-    const currentBalance = selectedCrypto === 'BTC' ? balance.balance_btc : selectedCrypto === 'LTC' ? balance.balance_ltc : balance.balance_xmr;
+    const currentBalance = selectedCrypto === 'BTC' ? balance.balance_btc : balance.balance_ltc;
     if (currentBalance < calculation.cryptoAmount) {
       return { valid: false, error: 'Insufficient balance' };
     }
@@ -198,15 +197,10 @@ export default function WithdrawalModal({ open, onOpenChange, onWithdrawalSucces
       if (!btcRegex.test(destinationAddress)) {
         return { valid: false, error: 'Invalid Bitcoin address' };
       }
-    } else if (selectedCrypto === 'LTC') {
+    } else {
       const ltcRegex = /^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$|^ltc1[a-z0-9]{39,59}$/;
       if (!ltcRegex.test(destinationAddress)) {
         return { valid: false, error: 'Invalid Litecoin address' };
-      }
-    } else if (selectedCrypto === 'XMR') {
-      const xmrRegex = /^[48][0-9AB][1-9A-HJ-NP-Za-km-z]{93}$/;
-      if (!xmrRegex.test(destinationAddress)) {
-        return { valid: false, error: 'Invalid Monero address' };
       }
     }
 
@@ -343,8 +337,8 @@ export default function WithdrawalModal({ open, onOpenChange, onWithdrawalSucces
             <Label>Select Currency</Label>
             <RadioGroup
               value={selectedCrypto}
-              onValueChange={(value: 'BTC' | 'LTC' | 'XMR') => setSelectedCrypto(value)}
-              className="flex flex-wrap gap-4"
+              onValueChange={(value: 'BTC' | 'LTC') => setSelectedCrypto(value)}
+              className="flex space-x-6"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="BTC" id="btc" />
@@ -364,17 +358,6 @@ export default function WithdrawalModal({ open, onOpenChange, onWithdrawalSucces
                   {balance && (
                     <span className="text-sm text-muted-foreground">
                       {balance.balance_ltc.toFixed(8)} LTC
-                    </span>
-                  )}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="XMR" id="xmr" />
-                <Label htmlFor="xmr" className="flex items-center gap-2">
-                  Monero (XMR)
-                  {balance && (
-                    <span className="text-sm text-muted-foreground">
-                      {balance.balance_xmr.toFixed(8)} XMR
                     </span>
                   )}
                 </Label>

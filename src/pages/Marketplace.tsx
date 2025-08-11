@@ -9,8 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, LogOut, Bitcoin, Wallet, Settings, Users, Shield } from 'lucide-react';
-import { useCryptoPrices } from '@/hooks/useCryptoPrices';
+import { Search, LogOut, Bitcoin, Wallet, Settings, Users } from 'lucide-react';
 import ProductModal from '@/components/ProductModal';
 import ShoppingCart from '@/components/ShoppingCart';
 import SellerProfileModal from '@/components/SellerProfileModal';
@@ -45,9 +44,8 @@ const Marketplace = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [btcPrices, setBtcPrices] = useState<{[key: string]: number}>({});
   const [ltcPrices, setLtcPrices] = useState<{[key: string]: number}>({});
-  const [xmrPrices, setXmrPrices] = useState<{[key: string]: number}>({});
-  
-  const { btcPrice: currentBtcPrice, ltcPrice: currentLtcPrice, xmrPrice: currentXmrPrice } = useCryptoPrices();
+  const [currentBtcPrice, setCurrentBtcPrice] = useState<number | null>(null);
+  const [currentLtcPrice, setCurrentLtcPrice] = useState<number | null>(null);
   const [userCount, setUserCount] = useState(0);
   const [sellerProfileOpen, setSellerProfileOpen] = useState(false);
   const [selectedSellerId, setSelectedSellerId] = useState('');
@@ -97,17 +95,6 @@ const Marketplace = () => {
       setLtcPrices(prices);
     }
   }, [currentLtcPrice, products]);
-
-  useEffect(() => {
-    // Recalculate XMR prices when currentXmrPrice changes
-    if (currentXmrPrice && products.length > 0) {
-      const prices: {[key: string]: number} = {};
-      products.forEach(product => {
-        prices[product.id] = product.price / currentXmrPrice;
-      });
-      setXmrPrices(prices);
-    }
-  }, [currentXmrPrice, products]);
 
   useEffect(() => {
     filterProducts();
@@ -178,15 +165,6 @@ const Marketplace = () => {
         ltcPricesMap[product.id] = product.price / currentLtcPrice;
       });
       setLtcPrices(ltcPricesMap);
-    }
-    
-    // Calculate XMR prices for all products
-    if (currentXmrPrice && data) {
-      const xmrPricesMap: {[key: string]: number} = {};
-      data.forEach(product => {
-        xmrPricesMap[product.id] = product.price / currentXmrPrice;
-      });
-      setXmrPrices(xmrPricesMap);
     }
   };
 
@@ -440,12 +418,6 @@ const Marketplace = () => {
                             <span className="text-white text-[8px] font-bold">L</span>
                           </div>
                           <span>Ł{(product.price / currentLtcPrice).toFixed(8)}</span>
-                        </div>
-                      )}
-                      {currentXmrPrice && (
-                        <div className="flex items-center text-xs text-purple-500">
-                          <Shield className="h-3 w-3 mr-1" />
-                          <span>ɱ{(product.price / currentXmrPrice).toFixed(8)}</span>
                         </div>
                       )}
                     </div>
