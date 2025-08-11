@@ -265,20 +265,27 @@ async function sendMoneroTransaction(
 ): Promise<string> {
   console.log(`Preparing XMR transaction: ${amountXMR} XMR from ${fromAddress} to ${toAddress}`)
   
-  // In a real implementation, you would:
-  // 1. Use a Monero wallet RPC or monero-javascript library
-  // 2. Create and sign the transaction
-  // 3. Broadcast to Monero network
-  // 4. Return the transaction hash
-  
-  // For now, simulate the transaction
-  const simulatedTxHash = `xmr_${Date.now()}_${Math.random().toString(36).substring(7)}`
-  console.log('Simulated XMR transaction:', simulatedTxHash)
-  
-  // Simulate processing delay
-  await new Promise(resolve => setTimeout(resolve, 2000))
-  
-  return simulatedTxHash
+  // Call the dedicated Monero withdrawal function
+  const moneroRpcUrl = Deno.env.get('SUPABASE_URL') + '/functions/v1/process-monero-withdrawal'
+  const response = await fetch(moneroRpcUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+    },
+    body: JSON.stringify({
+      amount_eur: amountXMR * 234.48, // Approximate conversion - will be recalculated
+      currency: 'XMR',
+      destination_address: toAddress
+    })
+  })
+
+  const result = await response.json()
+  if (result.error) {
+    throw new Error(result.error)
+  }
+
+  return result.tx_hash
 }
 
 serve(async (req) => {
