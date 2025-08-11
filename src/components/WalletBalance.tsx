@@ -105,8 +105,10 @@ export function WalletBalance() {
   }, [user]);
 
   useEffect(() => {
-    setLoading(false);
-  }, [balance]);
+    if (user) {
+      setLoading(false);
+    }
+  }, [balance, user]);
 
   if (loading) {
     return (
