@@ -289,7 +289,7 @@ export default function WithdrawalModal({ open, onOpenChange, onWithdrawalSucces
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Your withdrawal is being processed. You will receive {withdrawalResult.estimated_crypto_amount?.toFixed(8)} {selectedCrypto} after fees.
+                Your withdrawal is being processed. You will receive {withdrawalResult.estimated_crypto_amount?.toFixed(8)} {selectedCrypto} at the destination address within {selectedCrypto === 'BTC' ? '1-3 hours' : '15-45 minutes'} depending on network congestion.
               </AlertDescription>
             </Alert>
 
@@ -420,6 +420,22 @@ export default function WithdrawalModal({ open, onOpenChange, onWithdrawalSucces
                 <div className="flex justify-between font-medium">
                   <span>You'll receive:</span>
                   <span>≈ {calculation.cryptoAmount.toFixed(8)} {selectedCrypto}</span>
+                </div>
+              </div>
+              
+              {/* Transaction Time Information */}
+              <div className="mt-3 pt-3 border-t space-y-1 text-xs text-muted-foreground">
+                <div className="flex justify-between">
+                  <span>Processing Time:</span>
+                  <span>~2-5 minutes</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Network Confirmation:</span>
+                  <span>{selectedCrypto === 'BTC' ? '~10-60 min' : '~2.5-15 min'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Full Settlement:</span>
+                  <span>{selectedCrypto === 'BTC' ? '~1-3 hours' : '~15-45 min'}</span>
                 </div>
               </div>
             </div>
