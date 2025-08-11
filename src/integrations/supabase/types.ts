@@ -49,6 +49,41 @@ export type Database = {
           },
         ]
       }
+      bulk_discounts: {
+        Row: {
+          created_at: string | null
+          discount_percentage: number
+          id: string
+          min_quantity: number
+          product_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          discount_percentage: number
+          id?: string
+          min_quantity: number
+          product_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          discount_percentage?: number
+          id?: string
+          min_quantity?: number
+          product_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bulk_discounts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cart_items: {
         Row: {
           category: string
@@ -159,6 +194,94 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      dispute_messages: {
+        Row: {
+          created_at: string | null
+          dispute_id: string
+          id: string
+          is_admin: boolean | null
+          message: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          dispute_id: string
+          id?: string
+          is_admin?: boolean | null
+          message: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string | null
+          dispute_id?: string
+          id?: string
+          is_admin?: boolean | null
+          message?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispute_messages_dispute_id_fkey"
+            columns: ["dispute_id"]
+            isOneToOne: false
+            referencedRelation: "disputes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      disputes: {
+        Row: {
+          admin_assigned: string | null
+          created_at: string | null
+          defendant_id: string
+          id: string
+          order_id: string
+          plaintiff_id: string
+          priority: string
+          reason: string
+          resolution: string | null
+          resolved_at: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_assigned?: string | null
+          created_at?: string | null
+          defendant_id: string
+          id?: string
+          order_id: string
+          plaintiff_id: string
+          priority?: string
+          reason: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_assigned?: string | null
+          created_at?: string | null
+          defendant_id?: string
+          id?: string
+          order_id?: string
+          plaintiff_id?: string
+          priority?: string
+          reason?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       news: {
         Row: {
@@ -585,6 +708,8 @@ export type Database = {
           balance_eur: number
           balance_ltc: number
           balance_ltc_deposited: number
+          balance_xmr: number
+          balance_xmr_deposited: number
           created_at: string
           id: string
           updated_at: string
@@ -596,6 +721,8 @@ export type Database = {
           balance_eur?: number
           balance_ltc?: number
           balance_ltc_deposited?: number
+          balance_xmr?: number
+          balance_xmr_deposited?: number
           created_at?: string
           id?: string
           updated_at?: string
@@ -607,6 +734,8 @@ export type Database = {
           balance_eur?: number
           balance_ltc?: number
           balance_ltc_deposited?: number
+          balance_xmr?: number
+          balance_xmr_deposited?: number
           created_at?: string
           id?: string
           updated_at?: string

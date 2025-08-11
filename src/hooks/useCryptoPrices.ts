@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 interface CryptoPrices {
   btcPrice: number | null;
   ltcPrice: number | null;
+  xmrPrice: number | null;
   loading: boolean;
   error: string | null;
 }
@@ -10,6 +11,7 @@ interface CryptoPrices {
 export const useCryptoPrices = (autoRefresh = true): CryptoPrices => {
   const [btcPrice, setBtcPrice] = useState<number | null>(null);
   const [ltcPrice, setLtcPrice] = useState<number | null>(null);
+  const [xmrPrice, setXmrPrice] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +20,7 @@ export const useCryptoPrices = (autoRefresh = true): CryptoPrices => {
       setError(null);
       
       // Use a more reliable API with better CORS support
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,litecoin&vs_currencies=eur&precision=2');
+      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,litecoin,monero&vs_currencies=eur&precision=2');
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -26,9 +28,10 @@ export const useCryptoPrices = (autoRefresh = true): CryptoPrices => {
       
       const data = await response.json();
       
-      if (data.bitcoin?.eur && data.litecoin?.eur) {
+      if (data.bitcoin?.eur && data.litecoin?.eur && data.monero?.eur) {
         setBtcPrice(data.bitcoin.eur);
         setLtcPrice(data.litecoin.eur);
+        setXmrPrice(data.monero.eur);
       } else {
         throw new Error('Invalid price data received');
       }
@@ -39,6 +42,7 @@ export const useCryptoPrices = (autoRefresh = true): CryptoPrices => {
       // Set fallback prices to prevent blocking UI
       setBtcPrice(90000); // Approximate fallback
       setLtcPrice(100);   // Approximate fallback
+      setXmrPrice(150);   // Approximate fallback
     } finally {
       setLoading(false);
     }
@@ -54,5 +58,5 @@ export const useCryptoPrices = (autoRefresh = true): CryptoPrices => {
     }
   }, [autoRefresh]);
 
-  return { btcPrice, ltcPrice, loading, error };
+  return { btcPrice, ltcPrice, xmrPrice, loading, error };
 };

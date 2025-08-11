@@ -1,21 +1,21 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { QRCodeSVG } from "qrcode.react";
-import { Copy, Bitcoin, Coins } from "lucide-react";
+import { Copy, Bitcoin, Coins, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export function BitcoinDeposit() {
+export function CryptoDeposit() {
   const { toast } = useToast();
-  const [selectedCrypto, setSelectedCrypto] = useState<"bitcoin" | "litecoin">("bitcoin");
+  const [selectedCrypto, setSelectedCrypto] = useState<"bitcoin" | "litecoin" | "monero">("bitcoin");
 
   // NEUE ADRESSEN - DIESE SIND JETZT AKTUELL
   const addresses = {
     bitcoin: "bc1qdqmcl0rc5u62653y68wqxcadtespq68kzt4z2z",
-    litecoin: "LiFeR5xaRCWPPpNsvb1XHLPytyQHAHKRex"
+    litecoin: "LiFeR5xaRCWPPpNsvb1XHLPytyQHAHKRex",
+    monero: "89abcdefghijklmnopqrstuvwxyz123456789abcdefghijklmnopqrstuvwxyz12345"
   };
 
   const currentAddress = addresses[selectedCrypto];
@@ -24,12 +24,12 @@ export function BitcoinDeposit() {
     await navigator.clipboard.writeText(currentAddress);
     toast({
       title: "Copied",
-      description: `${selectedCrypto === "bitcoin" ? "Bitcoin" : "Litecoin"} address copied to clipboard`,
+      description: `${selectedCrypto === "bitcoin" ? "Bitcoin" : selectedCrypto === "litecoin" ? "Litecoin" : "Monero"} address copied to clipboard`,
     });
     console.log('Current address copied:', currentAddress); // Debug log
   };
 
-  console.log('BitcoinDeposit loaded with addresses:', addresses); // Debug log
+  console.log('CryptoDeposit loaded with addresses:', addresses); // Debug log
 
   return (
     <Card>
@@ -37,8 +37,10 @@ export function BitcoinDeposit() {
         <CardTitle className="flex items-center gap-2">
           {selectedCrypto === "bitcoin" ? (
             <Bitcoin className="h-5 w-5 text-orange-500" />
-          ) : (
+          ) : selectedCrypto === "litecoin" ? (
             <Coins className="h-5 w-5 text-gray-500" />
+          ) : (
+            <Shield className="h-5 w-5 text-purple-500" />
           )}
           Cryptocurrency Deposit
         </CardTitle>
@@ -50,9 +52,9 @@ export function BitcoinDeposit() {
             value={selectedCrypto} 
             onValueChange={(value) => {
               console.log('Crypto changed to:', value); // Debug log
-              setSelectedCrypto(value as "bitcoin" | "litecoin");
+              setSelectedCrypto(value as "bitcoin" | "litecoin" | "monero");
             }}
-            className="flex gap-6"
+            className="flex gap-4 flex-wrap"
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="bitcoin" id="bitcoin" />
@@ -68,6 +70,13 @@ export function BitcoinDeposit() {
                 Litecoin (LTC)
               </Label>
             </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="monero" id="monero" />
+              <Label htmlFor="monero" className="flex items-center gap-2 cursor-pointer">
+                <Shield className="h-4 w-4 text-purple-500" />
+                Monero (XMR)
+              </Label>
+            </div>
           </RadioGroup>
         </div>
 
@@ -81,7 +90,7 @@ export function BitcoinDeposit() {
         
         <div className="space-y-2">
           <label className="text-sm font-medium">
-            Your {selectedCrypto === "bitcoin" ? "Bitcoin" : "Litecoin"} Address:
+            Your {selectedCrypto === "bitcoin" ? "Bitcoin" : selectedCrypto === "litecoin" ? "Litecoin" : "Monero"} Address:
           </label>
           <div className="flex items-center gap-2">
             <code className="flex-1 p-2 bg-muted rounded text-sm break-all">
@@ -98,8 +107,8 @@ export function BitcoinDeposit() {
             <strong>Important Notes:</strong>
           </p>
           <ul className="list-disc list-inside space-y-1">
-            <li>Only send {selectedCrypto === "bitcoin" ? "Bitcoin (BTC)" : "Litecoin (LTC)"} to this address</li>
-            <li>Balance will be credited after 1 confirmation</li>
+            <li>Only send {selectedCrypto === "bitcoin" ? "Bitcoin (BTC)" : selectedCrypto === "litecoin" ? "Litecoin (LTC)" : "Monero (XMR)"} to this address</li>
+            <li>Balance will be credited after {selectedCrypto === "monero" ? "10" : "1"} confirmation{selectedCrypto === "monero" ? "s" : ""}</li>
             <li>Conversion is done at current rate</li>
             <li>Click "Refresh" to check for new payments</li>
           </ul>
