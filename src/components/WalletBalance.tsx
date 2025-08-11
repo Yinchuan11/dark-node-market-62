@@ -5,6 +5,7 @@ import { RefreshCw, Wallet, Bitcoin, Coins } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useCryptoPrices } from "@/hooks/useCryptoPrices";
 
 interface WalletBalance {
   balance_eur: number;
@@ -20,8 +21,7 @@ export function WalletBalance() {
   const [balance, setBalance] = useState<WalletBalance | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [btcPrice, setBtcPrice] = useState<number | null>(null);
-  const [ltcPrice, setLtcPrice] = useState<number | null>(null);
+  const { btcPrice, ltcPrice } = useCryptoPrices();
 
   const fetchBalance = async () => {
     if (!user) return;
@@ -65,22 +65,6 @@ export function WalletBalance() {
     }
   };
 
-  const fetchCryptoPrices = async () => {
-    try {
-      const [btcResponse, ltcResponse] = await Promise.all([
-        fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur'),
-        fetch('https://api.coingecko.com/api/v3/simple/price?ids=litecoin&vs_currencies=eur')
-      ]);
-      
-      const btcData = await btcResponse.json();
-      const ltcData = await ltcResponse.json();
-      
-      setBtcPrice(btcData.bitcoin?.eur || 0);
-      setLtcPrice(ltcData.litecoin?.eur || 0);
-    } catch (error) {
-      console.error('Error fetching crypto prices:', error);
-    }
-  };
 
   const refreshPayments = async () => {
     if (!user) return;
@@ -113,7 +97,6 @@ export function WalletBalance() {
   useEffect(() => {
     if (user) {
       fetchBalance();
-      fetchCryptoPrices();
     }
   }, [user]);
 

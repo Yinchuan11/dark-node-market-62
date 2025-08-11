@@ -127,27 +127,6 @@ const Marketplace = () => {
   };
 
 
-  const fetchBtcPrice = async () => {
-    try {
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur');
-      const data = await response.json();
-      const price = data.bitcoin.eur;
-      setCurrentBtcPrice(price);
-    } catch (error) {
-      console.error('Error fetching BTC price:', error);
-    }
-  };
-
-  const fetchLtcPrice = async () => {
-    try {
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=litecoin&vs_currencies=eur');
-      const data = await response.json();
-      const price = data.litecoin.eur;
-      setCurrentLtcPrice(price);
-    } catch (error) {
-      console.error('Error fetching LTC price:', error);
-    }
-  };
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
