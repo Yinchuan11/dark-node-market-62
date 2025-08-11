@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Trash2, Plus, Users, Edit, Eye } from 'lucide-react';
 import EditProductModal from '@/components/EditProductModal';
+import NewsEditor from '@/components/NewsEditor';
 
 const AdminPanel = () => {
   const { user, profile, loading } = useAuth();
@@ -205,7 +206,9 @@ const AdminPanel = () => {
           </CardContent>
         </Card>
 
-        <Card>
+<NewsEditor />
+
+<Card>
           <CardHeader>
             <CardTitle>Kategorie Management</CardTitle>
             <CardDescription>

@@ -33,25 +33,20 @@ interface Order {
   total_amount_eur: number;
   status: string;
   created_at: string;
-  shipping_first_name: string;
-  shipping_last_name: string;
-  shipping_street: string;
-  shipping_house_number: string;
-  shipping_postal_code: string;
-  shipping_city: string;
-  shipping_country: string;
-  profiles: {
-    username: string;
-  };
-  order_items: {
-    id: string;
+  shipping_first_name: string | null;
+  shipping_last_name: string | null;
+  shipping_street: string | null;
+  shipping_house_number: string | null;
+  shipping_postal_code: string | null;
+  shipping_city: string | null;
+  shipping_country: string | null;
+  buyer_username: string;
+  items: {
+    order_item_id: string;
     quantity: number;
     price_eur: number;
-    products: {
-      title: string;
-      seller_id: string;
-    } | null;
-  }[];
+    product_title: string | null;
+  }[] | null;
 }
 
 const SellerDashboard = () => {
@@ -113,52 +108,19 @@ const SellerDashboard = () => {
     setProducts(data || []);
   };
 
-  const fetchOrders = async () => {
-    if (!user) return;
+const fetchOrders = async () => {
+  if (!user) return;
 
-    const { data, error } = await supabase
-      .from('orders')
-      .select(`
-        id,
-        user_id,
-        total_amount_eur,
-        status,
-        created_at,
-        shipping_first_name,
-        shipping_last_name,
-        shipping_street,
-        shipping_house_number,
-        shipping_postal_code,
-        shipping_city,
-        shipping_country,
-        profiles!orders_user_id_fkey (username),
-        order_items (
-          id,
-          quantity,
-          price_eur,
-          products (
-            title,
-            seller_id
-          )
-        )
-      `)
-      .eq('status', 'confirmed')
-      .order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .rpc('get_seller_orders', { seller_uuid: user.id });
 
-    if (error) {
-      console.error('Error fetching orders:', error);
-      return;
-    }
+  if (error) {
+    console.error('Error fetching seller orders:', error);
+    return;
+  }
 
-    // Filter orders to only include those with items from this seller
-    const filteredOrders = data?.filter(order => 
-      order.order_items && order.order_items.some(item => 
-        item.products && item.products.seller_id === user.id
-      )
-    ) || [];
-
-    setOrders(filteredOrders);
-  };
+  setOrders((data as any) || []);
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -473,17 +435,15 @@ const SellerDashboard = () => {
                           </p>
                           <p className="text-lg font-bold text-primary">€{order.total_amount_eur.toFixed(2)}</p>
                           <p className="text-sm">Status: <span className="font-medium">{order.status}</span></p>
-                          <p className="text-sm">Customer: <span className="font-medium">@{order.profiles.username}</span></p>
+                          <p className="text-sm">Customer: <span className="font-medium">@{order.buyer_username}</span></p>
                           
                           <div className="mt-2">
                             <h4 className="font-medium text-sm">Items:</h4>
-                            {order.order_items
-                              .filter(item => item.products && item.products.seller_id === user.id)
-                              .map((item) => (
-                                <p key={item.id} className="text-xs text-muted-foreground">
-                                  {item.quantity}x {item.products?.title || 'Product unavailable'} (€{item.price_eur.toFixed(2)})
-                                </p>
-                              ))}
+                            {order.items?.map((item) => (
+                              <p key={item.order_item_id} className="text-xs text-muted-foreground">
+                                {item.quantity}x {item.product_title || 'Product unavailable'} (€{item.price_eur.toFixed(2)})
+                              </p>
+                            ))}
                           </div>
                         </div>
                         

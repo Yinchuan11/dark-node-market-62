@@ -160,6 +160,30 @@ export type Database = {
         }
         Relationships: []
       }
+      news: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -518,6 +542,25 @@ export type Database = {
           balance_eur: number
           balance_btc: number
           balance_ltc: number
+        }[]
+      }
+      get_seller_orders: {
+        Args: { seller_uuid: string }
+        Returns: {
+          id: string
+          user_id: string
+          total_amount_eur: number
+          status: string
+          created_at: string
+          shipping_first_name: string
+          shipping_last_name: string
+          shipping_street: string
+          shipping_house_number: string
+          shipping_postal_code: string
+          shipping_city: string
+          shipping_country: string
+          buyer_username: string
+          items: Json
         }[]
       }
       get_user_role: {

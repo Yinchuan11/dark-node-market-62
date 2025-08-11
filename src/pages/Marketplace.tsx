@@ -13,6 +13,7 @@ import { Search, LogOut, Bitcoin, Wallet, Settings, Users } from 'lucide-react';
 import ProductModal from '@/components/ProductModal';
 import ShoppingCart from '@/components/ShoppingCart';
 import { useCart } from '@/hooks/useCart';
+import NewsPanel from '@/components/NewsPanel';
 
 interface Product {
   id: string;
@@ -335,6 +336,10 @@ const Marketplace = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        <div className="mb-6">
+          <NewsPanel />
         </div>
 
         {/* Search and Filter */}
