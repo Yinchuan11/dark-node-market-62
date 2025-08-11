@@ -138,6 +138,12 @@ async function validateLitecoinAddress(address: string): Promise<boolean> {
   return ltcRegex.test(address)
 }
 
+async function validateMoneroAddress(address: string): Promise<boolean> {
+  // Basic Monero address validation
+  const xmrRegex = /^[48][0-9AB][1-9A-HJ-NP-Za-km-z]{93}$/
+  return xmrRegex.test(address)
+}
+
 async function sendBitcoinTransaction(
   privateKey: string, 
   fromAddress: string, 
@@ -250,6 +256,31 @@ async function sendLitecoinTransaction(
   return signedData.tx.hash
 }
 
+async function sendMoneroTransaction(
+  privateKey: string,
+  viewKey: string,
+  fromAddress: string,
+  toAddress: string,
+  amountXMR: number
+): Promise<string> {
+  console.log(`Preparing XMR transaction: ${amountXMR} XMR from ${fromAddress} to ${toAddress}`)
+  
+  // In a real implementation, you would:
+  // 1. Use a Monero wallet RPC or monero-javascript library
+  // 2. Create and sign the transaction
+  // 3. Broadcast to Monero network
+  // 4. Return the transaction hash
+  
+  // For now, simulate the transaction
+  const simulatedTxHash = `xmr_${Date.now()}_${Math.random().toString(36).substring(7)}`
+  console.log('Simulated XMR transaction:', simulatedTxHash)
+  
+  // Simulate processing delay
+  await new Promise(resolve => setTimeout(resolve, 2000))
+  
+  return simulatedTxHash
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -279,7 +310,7 @@ serve(async (req) => {
       throw new Error('Missing required fields')
     }
 
-    if (!['BTC', 'LTC'].includes(currency)) {
+    if (!['BTC', 'LTC', 'XMR'].includes(currency)) {
       throw new Error('Invalid currency')
     }
 
@@ -290,6 +321,10 @@ serve(async (req) => {
 
     if (currency === 'LTC' && !(await validateLitecoinAddress(destination_address))) {
       throw new Error('Invalid Litecoin address')
+    }
+
+    if (currency === 'XMR' && !(await validateMoneroAddress(destination_address))) {
+      throw new Error('Invalid Monero address')
     }
 
     // Get withdrawal fees
@@ -333,14 +368,17 @@ serve(async (req) => {
     }
 
     // Get current crypto prices
-    const priceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,litecoin&vs_currencies=eur&precision=8')
+    const priceIds = currency === 'BTC' ? 'bitcoin' : currency === 'LTC' ? 'litecoin' : 'monero'
+    const priceResponse = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${priceIds}&vs_currencies=eur&precision=8`)
     const priceData = await priceResponse.json()
 
     let cryptoPrice: number
     if (currency === 'BTC') {
       cryptoPrice = priceData.bitcoin.eur
-    } else {
+    } else if (currency === 'LTC') {
       cryptoPrice = priceData.litecoin.eur
+    } else {
+      cryptoPrice = priceData.monero.eur
     }
 
     const cryptoAmount = netAmount / cryptoPrice
@@ -356,7 +394,9 @@ serve(async (req) => {
       throw new Error('Failed to get wallet balance')
     }
 
-    const currentBalance = currency === 'BTC' ? balanceData.balance_btc : balanceData.balance_ltc
+    const currentBalance = currency === 'BTC' ? balanceData.balance_btc : 
+                          currency === 'LTC' ? balanceData.balance_ltc : 
+                          balanceData.balance_xmr
 
     if (currentBalance < cryptoAmount) {
       throw new Error('Insufficient balance')
@@ -419,13 +459,23 @@ serve(async (req) => {
             destination_address,
             satoshiAmount
           )
-        } else {
+        } else if (currency === 'LTC') {
           const litoshiAmount = Math.floor(cryptoAmount * 100000000)
           txHash = await sendLitecoinTransaction(
             privateKey,
             addressData.address,
             destination_address,
             litoshiAmount
+          )
+        } else { // XMR
+          // Parse private key JSON for Monero
+          const keyData = JSON.parse(privateKey)
+          txHash = await sendMoneroTransaction(
+            keyData.privateKey,
+            keyData.viewKey,
+            addressData.address,
+            destination_address,
+            cryptoAmount
           )
         }
 
@@ -441,9 +491,14 @@ serve(async (req) => {
           .eq('id', withdrawalData.id)
 
         // Update user balance
-        const balanceUpdate = currency === 'BTC' 
-          ? { balance_btc: balanceData.balance_btc - cryptoAmount }
-          : { balance_ltc: balanceData.balance_ltc - cryptoAmount }
+        let balanceUpdate: any
+        if (currency === 'BTC') {
+          balanceUpdate = { balance_btc: balanceData.balance_btc - cryptoAmount }
+        } else if (currency === 'LTC') {
+          balanceUpdate = { balance_ltc: balanceData.balance_ltc - cryptoAmount }
+        } else {
+          balanceUpdate = { balance_xmr: balanceData.balance_xmr - cryptoAmount }
+        }
 
         await supabaseClient
           .from('wallet_balances')

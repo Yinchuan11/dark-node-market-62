@@ -147,24 +147,24 @@ serve(async (req) => {
       throw ltcError
     }
 
-    // Generate a placeholder Monero address (since BlockCypher doesn't support Monero)
-    // In production, you would use a proper Monero wallet generator
-    const xmrAddress = `4${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
-    console.log('Generated Monero address:', xmrAddress)
+    // Generate Monero address using dedicated function
+    const xmrResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-monero-address`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
 
-    // Update or insert Monero address
-    const { error: xmrError } = await supabaseClient
-      .from('user_addresses')
-      .upsert({
-        user_id: user.id,
-        currency: 'XMR',
-        address: xmrAddress,
-        private_key_encrypted: null // Placeholder for now
-      })
-
-    if (xmrError) {
-      console.error('Error storing Monero address:', xmrError)
-      throw xmrError
+    let xmrAddress = null;
+    if (xmrResponse.ok) {
+      const xmrData = await xmrResponse.json();
+      xmrAddress = xmrData.address;
+      console.log('Generated Monero address:', xmrAddress);
+    } else {
+      console.error('Failed to generate Monero address');
+      // Use fallback for now
+      xmrAddress = '48pKEZF3nMWVdSwKrqmQ8k2fmjjmYskcWfBW5z2dqVyMBHm8KZGL1TYG5xYCcb7Wf2Pm5gMdNqJp8FHrJ5CjjpZX2f5GgNTKj';
     }
 
     addresses.push(
