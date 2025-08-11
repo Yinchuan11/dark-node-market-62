@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Package, Truck, CheckCircle, ExternalLink } from 'lucide-react';
+import { Star, Package, Truck, CheckCircle, ExternalLink, ArrowLeft } from 'lucide-react';
 import ReviewModal from '@/components/ReviewModal';
 import SellerProfileModal from '@/components/SellerProfileModal';
 
@@ -43,6 +43,7 @@ interface OrderItem {
 
 const Orders: React.FC = () => {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<OrderWithSellers[]>([]);
   const [itemsByOrder, setItemsByOrder] = useState<Record<string, OrderItem[]>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -197,7 +198,17 @@ const Orders: React.FC = () => {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold font-cinzel">My Orders</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold font-cinzel">My Orders</h1>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/marketplace')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Marketplace
+          </Button>
+        </div>
 
         <Card>
           <CardHeader>
