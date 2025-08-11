@@ -622,11 +622,129 @@ export type Database = {
           },
         ]
       }
+      wallet_security: {
+        Row: {
+          created_at: string
+          id: string
+          last_withdrawal_at: string | null
+          two_factor_enabled: boolean
+          updated_at: string
+          user_id: string
+          withdrawal_limit_daily_eur: number
+          withdrawal_limit_monthly_eur: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_withdrawal_at?: string | null
+          two_factor_enabled?: boolean
+          updated_at?: string
+          user_id: string
+          withdrawal_limit_daily_eur?: number
+          withdrawal_limit_monthly_eur?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_withdrawal_at?: string | null
+          two_factor_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+          withdrawal_limit_daily_eur?: number
+          withdrawal_limit_monthly_eur?: number
+        }
+        Relationships: []
+      }
+      withdrawal_fees: {
+        Row: {
+          base_fee_eur: number
+          created_at: string
+          currency: string
+          id: string
+          min_amount_eur: number
+          network_fee_crypto: number
+          percentage_fee: number
+          updated_at: string
+        }
+        Insert: {
+          base_fee_eur?: number
+          created_at?: string
+          currency: string
+          id?: string
+          min_amount_eur?: number
+          network_fee_crypto?: number
+          percentage_fee?: number
+          updated_at?: string
+        }
+        Update: {
+          base_fee_eur?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          min_amount_eur?: number
+          network_fee_crypto?: number
+          percentage_fee?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      withdrawal_requests: {
+        Row: {
+          amount_crypto: number
+          amount_eur: number
+          created_at: string
+          currency: string
+          destination_address: string
+          fee_eur: number
+          id: string
+          notes: string | null
+          processed_at: string | null
+          status: string
+          tx_hash: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_crypto: number
+          amount_eur: number
+          created_at?: string
+          currency: string
+          destination_address: string
+          fee_eur?: number
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          status?: string
+          tx_hash?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_crypto?: number
+          amount_eur?: number
+          created_at?: string
+          currency?: string
+          destination_address?: string
+          fee_eur?: number
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          status?: string
+          tx_hash?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_withdrawal_limits: {
+        Args: { user_uuid: string; amount_eur: number }
+        Returns: boolean
+      }
       close_deposit_request: {
         Args: { request_id: string }
         Returns: boolean
