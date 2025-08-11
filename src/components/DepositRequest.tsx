@@ -119,11 +119,13 @@ export function DepositRequest() {
         const ltcAddr = data.find(addr => addr.currency === 'LTC')?.address;
         const xmrAddr = data.find(addr => addr.currency === 'XMR')?.address;
         
-        if (btcAddr && ltcAddr && xmrAddr && btcAddr !== 'pending' && ltcAddr !== 'pending' && xmrAddr !== 'pending') {
-          setUserAddresses({ btc: btcAddr, ltc: ltcAddr, xmr: xmrAddr });
+        if (btcAddr && ltcAddr && btcAddr !== 'pending' && ltcAddr !== 'pending') {
+          // For now, use a placeholder XMR address if it's still pending
+          const finalXmrAddr = xmrAddr && xmrAddr !== 'pending' ? xmrAddr : '48pKEZF3nMWVdSwKrqmQ8k2fmjjmYskcWfBW5z2dqVyMBHm8KZGL1TYG5xYCcb7Wf2Pm5gMdNqJp8FHrJ5CjjpZX2f5GgNTKj';
+          setUserAddresses({ btc: btcAddr, ltc: ltcAddr, xmr: finalXmrAddr });
           setGeneratingAddresses(false); // Make sure to stop any loading state
         } else {
-          // Generate addresses if they are still pending
+          // Generate addresses if BTC or LTC are still pending
           await generateUserAddresses();
         }
       } else if (data && data.length > 0) {

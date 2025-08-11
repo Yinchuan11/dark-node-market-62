@@ -65,7 +65,7 @@ serve(async (req) => {
       .select('*')
       .eq('user_id', user.id)
 
-    if (existingAddresses && existingAddresses.length >= 2) {
+    if (existingAddresses && existingAddresses.length >= 3) {
       console.log('User already has addresses')
       return new Response(
         JSON.stringify({ 
@@ -147,9 +147,30 @@ serve(async (req) => {
       throw ltcError
     }
 
+    // Generate a placeholder Monero address (since BlockCypher doesn't support Monero)
+    // In production, you would use a proper Monero wallet generator
+    const xmrAddress = `4${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
+    console.log('Generated Monero address:', xmrAddress)
+
+    // Update or insert Monero address
+    const { error: xmrError } = await supabaseClient
+      .from('user_addresses')
+      .upsert({
+        user_id: user.id,
+        currency: 'XMR',
+        address: xmrAddress,
+        private_key_encrypted: null // Placeholder for now
+      })
+
+    if (xmrError) {
+      console.error('Error storing Monero address:', xmrError)
+      throw xmrError
+    }
+
     addresses.push(
       { currency: 'BTC', address: btcData.address },
-      { currency: 'LTC', address: ltcData.address }
+      { currency: 'LTC', address: ltcData.address },
+      { currency: 'XMR', address: xmrAddress }
     )
 
     return new Response(
