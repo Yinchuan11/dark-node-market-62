@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Wallet, Bitcoin, Coins } from "lucide-react";
+import { RefreshCw, Wallet, Bitcoin, Coins, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,8 +11,10 @@ interface WalletBalance {
   balance_eur: number;
   balance_btc: number;
   balance_ltc: number;
+  balance_xmr: number;
   balance_btc_deposited: number;
   balance_ltc_deposited: number;
+  balance_xmr_deposited: number;
 }
 
 export function WalletBalance() {
@@ -21,7 +23,7 @@ export function WalletBalance() {
   const [balance, setBalance] = useState<WalletBalance | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { btcPrice, ltcPrice } = useCryptoPrices();
+  const { btcPrice, ltcPrice, xmrPrice } = useCryptoPrices();
 
   const fetchBalance = async () => {
     if (!user) return;
@@ -29,7 +31,7 @@ export function WalletBalance() {
     try {
       const { data, error } = await supabase
         .from('wallet_balances')
-        .select('balance_eur, balance_btc, balance_ltc, balance_btc_deposited, balance_ltc_deposited')
+        .select('balance_eur, balance_btc, balance_ltc, balance_xmr, balance_btc_deposited, balance_ltc_deposited, balance_xmr_deposited')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -46,8 +48,10 @@ export function WalletBalance() {
             balance_eur: 0,
             balance_btc: 0,
             balance_ltc: 0,
+            balance_xmr: 0,
             balance_btc_deposited: 0,
-            balance_ltc_deposited: 0
+            balance_ltc_deposited: 0,
+            balance_xmr_deposited: 0
           })
           .select()
           .single();
@@ -146,7 +150,7 @@ export function WalletBalance() {
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 gap-4">
           {/* Crypto Balances */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Bitcoin Balance */}
             <div className="bg-card border p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
@@ -188,6 +192,27 @@ export function WalletBalance() {
                 </div>
               </div>
             </div>
+
+            {/* Monero Balance */}
+            <div className="bg-card border p-4 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Shield className="h-5 w-5 text-purple-500" />
+                <h4 className="font-medium">Monero (XMR)</h4>
+              </div>
+              <div className="space-y-1">
+                <div className="text-2xl font-bold">
+                  {balance?.balance_xmr?.toFixed(8) || '0.00000000'} XMR
+                </div>
+                {xmrPrice && balance?.balance_xmr && (
+                  <div className="text-lg font-semibold text-primary">
+                    ≈ €{(balance.balance_xmr * xmrPrice).toFixed(2)}
+                  </div>
+                )}
+                <div className="text-xs text-muted-foreground">
+                  Available for purchases
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -201,6 +226,10 @@ export function WalletBalance() {
             <div className="flex justify-between">
               <span>Total Litecoin Deposited:</span>
               <span className="font-medium">{balance?.balance_ltc_deposited?.toFixed(8) || '0.00000000'} LTC</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Total Monero Deposited:</span>
+              <span className="font-medium">{balance?.balance_xmr_deposited?.toFixed(8) || '0.00000000'} XMR</span>
             </div>
           </div>
         </div>

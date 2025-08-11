@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { QRCodeSVG } from "qrcode.react";
-import { Copy, Bitcoin, Coins, Euro, RefreshCw, X } from "lucide-react";
+import { Copy, Bitcoin, Coins, Euro, RefreshCw, X, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,11 +13,11 @@ import { supabase } from "@/integrations/supabase/client";
 export function DepositRequest() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [selectedCrypto, setSelectedCrypto] = useState<"bitcoin" | "litecoin">("bitcoin");
+  const [selectedCrypto, setSelectedCrypto] = useState<"bitcoin" | "litecoin" | "monero">("bitcoin");
   const [eurAmount, setEurAmount] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [generatingAddresses, setGeneratingAddresses] = useState(false);
-  const [userAddresses, setUserAddresses] = useState<{btc: string, ltc: string} | null>(null);
+  const [userAddresses, setUserAddresses] = useState<{btc: string, ltc: string, xmr: string} | null>(null);
   const [existingRequest, setExistingRequest] = useState<{
     id: string;
     crypto_amount: number;
@@ -28,8 +28,9 @@ export function DepositRequest() {
     address: string;
     currency: string;
   } | null>(null);
-  const [btcPrice, setBtcPrice] = useState<number | null>(null);
-  const [ltcPrice, setLtcPrice] = useState<number | null>(null);
+  const [btcPrice, setBtcPrice] = useState<number>(0);
+  const [ltcPrice, setLtcPrice] = useState<number>(0);
+  const [xmrPrice, setXmrPrice] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<string>("");
 
   // Check for existing pending request and user addresses
@@ -86,7 +87,7 @@ export function DepositRequest() {
         const expires = new Date(data.expires_at).getTime();
         
         if (expires > now) {
-          const currency = data.currency === 'BTC' ? 'bitcoin' : 'litecoin';
+          const currency = data.currency === 'BTC' ? 'bitcoin' : data.currency === 'LTC' ? 'litecoin' : 'monero';
           const qrData = `${currency}:${data.address}?amount=${data.crypto_amount.toFixed(8)}`;
           
           setExistingRequest({
@@ -113,12 +114,13 @@ export function DepositRequest() {
 
       if (error) throw error;
       
-      if (data && data.length >= 2) {
+      if (data && data.length >= 3) {
         const btcAddr = data.find(addr => addr.currency === 'BTC')?.address;
         const ltcAddr = data.find(addr => addr.currency === 'LTC')?.address;
+        const xmrAddr = data.find(addr => addr.currency === 'XMR')?.address;
         
-        if (btcAddr && ltcAddr && btcAddr !== 'pending' && ltcAddr !== 'pending') {
-          setUserAddresses({ btc: btcAddr, ltc: ltcAddr });
+        if (btcAddr && ltcAddr && xmrAddr && btcAddr !== 'pending' && ltcAddr !== 'pending' && xmrAddr !== 'pending') {
+          setUserAddresses({ btc: btcAddr, ltc: ltcAddr, xmr: xmrAddr });
         } else {
           // Generate addresses if they are still pending
           await generateUserAddresses();
@@ -145,7 +147,7 @@ export function DepositRequest() {
         setTimeout(() => getUserAddresses(), 1000);
         toast({
           title: "Addresses Generated",
-          description: "Your Bitcoin and Litecoin addresses have been created.",
+          description: "Your Bitcoin, Litecoin and Monero addresses have been created.",
         });
       } else {
         throw new Error("Failed to generate addresses");
@@ -171,7 +173,7 @@ export function DepositRequest() {
   const fetchPrices = async () => {
     try {
       // Use a more reliable endpoint with better CORS support
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,litecoin&vs_currencies=eur&precision=2');
+      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,litecoin,monero&vs_currencies=eur&precision=2');
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -181,23 +183,27 @@ export function DepositRequest() {
       
       const btcPriceValue = data.bitcoin?.eur;
       const ltcPriceValue = data.litecoin?.eur;
+      const xmrPriceValue = data.monero?.eur;
       
-      if (!btcPriceValue || !ltcPriceValue) {
+      if (!btcPriceValue || !ltcPriceValue || !xmrPriceValue) {
         throw new Error('Invalid price data received');
       }
       
       setBtcPrice(btcPriceValue);
       setLtcPrice(ltcPriceValue);
+      setXmrPrice(xmrPriceValue);
       
-      return { btcPrice: btcPriceValue, ltcPrice: ltcPriceValue };
+      return { btcPrice: btcPriceValue, ltcPrice: ltcPriceValue, xmrPrice: xmrPriceValue };
     } catch (error) {
       console.error('Error fetching crypto prices:', error);
       // Use fallback prices to prevent blocking
       const fallbackBtc = 90000;
       const fallbackLtc = 100;
+      const fallbackXmr = 150;
       setBtcPrice(fallbackBtc);
       setLtcPrice(fallbackLtc);
-      return { btcPrice: fallbackBtc, ltcPrice: fallbackLtc };
+      setXmrPrice(fallbackXmr);
+      return { btcPrice: fallbackBtc, ltcPrice: fallbackLtc, xmrPrice: fallbackXmr };
     }
   };
 
@@ -245,7 +251,7 @@ export function DepositRequest() {
       const prices = await fetchPrices();
       
       const amountEur = parseFloat(eurAmount);
-      const price = selectedCrypto === "bitcoin" ? prices.btcPrice : prices.ltcPrice;
+      const price = selectedCrypto === "bitcoin" ? prices.btcPrice : selectedCrypto === "litecoin" ? prices.ltcPrice : prices.xmrPrice;
       
       if (!price || price <= 0) {
         throw new Error("Invalid crypto price received");
@@ -254,9 +260,9 @@ export function DepositRequest() {
       const amountCrypto = amountEur / price;
       
       // Use user's individual address
-      const address = selectedCrypto === "bitcoin" ? userAddresses.btc : userAddresses.ltc;
+      const address = selectedCrypto === "bitcoin" ? userAddresses.btc : selectedCrypto === "litecoin" ? userAddresses.ltc : userAddresses.xmr;
       
-      // Generate fingerprint (1-99 satoshis/litoshis)
+      // Generate fingerprint (1-99 satoshis/litoshis/piconeros)
       const fingerprint = Math.floor(Math.random() * 99) + 1;
       const finalAmount = amountCrypto + (fingerprint / 1e8);
       
@@ -268,7 +274,7 @@ export function DepositRequest() {
         .from('deposit_requests')
         .insert({
           user_id: user.id,
-          currency: selectedCrypto === "bitcoin" ? "BTC" : "LTC",
+          currency: selectedCrypto === "bitcoin" ? "BTC" : selectedCrypto === "litecoin" ? "LTC" : "XMR",
           address: address,
           requested_eur: amountEur,
           rate_locked: price,
@@ -283,7 +289,7 @@ export function DepositRequest() {
       if (error) throw error;
 
       // Create BIP21 URI with exact amount
-      const currency = selectedCrypto === "bitcoin" ? "bitcoin" : "litecoin";
+      const currency = selectedCrypto === "bitcoin" ? "bitcoin" : selectedCrypto === "litecoin" ? "litecoin" : "monero";
       const qrData = `${currency}:${address}?amount=${finalAmount.toFixed(8)}`;
       
       const newRequest = {
@@ -387,7 +393,7 @@ export function DepositRequest() {
 
   // Show existing request if it exists
   if (existingRequest) {
-    const cryptoName = existingRequest.currency === 'BTC' ? 'bitcoin' : 'litecoin';
+    const cryptoName = existingRequest.currency === 'BTC' ? 'bitcoin' : existingRequest.currency === 'LTC' ? 'litecoin' : 'monero';
     return (
       <Card>
         <CardHeader>
@@ -395,8 +401,10 @@ export function DepositRequest() {
             <div className="flex items-center gap-2">
               {cryptoName === "bitcoin" ? (
                 <Bitcoin className="h-5 w-5 text-orange-500" />
-              ) : (
+              ) : cryptoName === "litecoin" ? (
                 <Coins className="h-5 w-5 text-blue-500" />
+              ) : (
+                <Shield className="h-5 w-5 text-purple-500" />
               )}
               Active Deposit Request
             </div>
@@ -431,7 +439,7 @@ export function DepositRequest() {
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Fingerprint:</span>
-              <span>+{existingRequest.fingerprint} {cryptoName === "bitcoin" ? "sats" : "litoshis"}</span>
+              <span>+{existingRequest.fingerprint} {cryptoName === "bitcoin" ? "sats" : cryptoName === "litecoin" ? "litoshis" : "piconeros"}</span>
             </div>
           </div>
 
@@ -445,7 +453,7 @@ export function DepositRequest() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium">BIP21 Payment URI:</Label>
+              <Label className="text-sm font-medium">Payment URI:</Label>
               <div className="flex items-center gap-2">
                 <code className="flex-1 p-2 bg-muted rounded text-xs break-all">
                   {existingRequest.qr_data}
@@ -458,7 +466,7 @@ export function DepositRequest() {
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">
-                Your {cryptoName === "bitcoin" ? "Bitcoin" : "Litecoin"} Address:
+                Your {cryptoName === "bitcoin" ? "Bitcoin" : cryptoName === "litecoin" ? "Litecoin" : "Monero"} Address:
               </Label>
               <div className="flex items-center gap-2">
                 <code className="flex-1 p-2 bg-muted rounded text-sm break-all">
@@ -476,7 +484,7 @@ export function DepositRequest() {
             <ul className="list-disc list-inside space-y-1 text-sm">
               <li>Send EXACTLY {existingRequest.crypto_amount.toFixed(8)} {existingRequest.currency}</li>
               <li>This is your personal {existingRequest.currency} address</li>
-              <li>Payment will be credited after 1 confirmation</li>
+              <li>Payment will be credited after {cryptoName === "monero" ? "10" : "1"} confirmation{cryptoName === "monero" ? "s" : ""}</li>
               <li>Request expires at {new Date(existingRequest.expires_at).toLocaleString()}</li>
               <li>You can close this request anytime using the Close button</li>
             </ul>
@@ -500,7 +508,7 @@ export function DepositRequest() {
           <div className="flex flex-col items-center gap-4">
             <RefreshCw className="h-8 w-8 animate-spin text-primary" />
             <p className="text-muted-foreground">
-              {generatingAddresses ? "Generating your Bitcoin and Litecoin addresses..." : "Loading your addresses..."}
+              {generatingAddresses ? "Generating your Bitcoin, Litecoin and Monero addresses..." : "Loading your addresses..."}
             </p>
           </div>
         </CardContent>
@@ -541,8 +549,8 @@ export function DepositRequest() {
             <Label className="text-sm font-medium">Select Cryptocurrency:</Label>
             <RadioGroup 
               value={selectedCrypto} 
-              onValueChange={(value) => setSelectedCrypto(value as "bitcoin" | "litecoin")}
-              className="flex gap-6"
+              onValueChange={(value) => setSelectedCrypto(value as "bitcoin" | "litecoin" | "monero")}
+              className="flex gap-4 flex-wrap"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="bitcoin" id="bitcoin" />
@@ -558,6 +566,13 @@ export function DepositRequest() {
                   Litecoin (LTC)
                 </Label>
               </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="monero" id="monero" />
+                <Label htmlFor="monero" className="flex items-center gap-2 cursor-pointer">
+                  <Shield className="h-4 w-4 text-purple-500" />
+                  Monero (XMR)
+                </Label>
+              </div>
             </RadioGroup>
           </div>
 
@@ -567,6 +582,7 @@ export function DepositRequest() {
               <div className="text-xs space-y-1">
                 <div><strong>BTC:</strong> {userAddresses.btc}</div>
                 <div><strong>LTC:</strong> {userAddresses.ltc}</div>
+                <div><strong>XMR:</strong> {userAddresses.xmr}</div>
               </div>
             </div>
           )}
@@ -593,7 +609,7 @@ export function DepositRequest() {
           <p><strong>How it works:</strong></p>
           <ul className="list-disc list-inside space-y-1">
             <li>Enter the EUR amount you want to deposit</li>
-            <li>Choose Bitcoin or Litecoin</li>
+            <li>Choose Bitcoin, Litecoin or Monero</li>
             <li>Send to your personal crypto address</li>
             <li>Only one active request allowed at a time</li>
             <li>Requests expire after 6 hours</li>
